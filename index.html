@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Spine & Spear: First Island Chain</title>
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#071018;
+  --panel:#101b24;
+  --panel2:#172736;
+  --line:#35516a;
+  --text:#e8f4ff;
+  --muted:#9fb3c8;
+  --blue:#4aa3ff;
+  --green:#64e572;
+  --gold:#ffd35a;
+  --red:#ff5a5a;
+  --cyan:#50f0ff;
+}
+body{
+  margin:0;
+  background:linear-gradient(#05080d,#071018);
+  color:var(--text);
+  font-family:"Courier New",monospace;
+  touch-action:manipulation;
+}
+header{
+  padding:14px;
+  text-align:center;
+  border-bottom:3px solid var(--line);
+  background:#0b1620;
+}
+h1{
+  margin:0;
+  font-size:20px;
+  color:var(--gold);
+  text-shadow:2px 2px #000;
+}
+.tagline{
+  font-size:12px;
+  color:var(--cyan);
+  margin-top:6px;
+}
+.designed{
+  font-size:11px;
+  color:var(--muted);
+}
+.wrap{
+  max-width:980px;
+  margin:0 auto;
+  padding:10px;
+}
+.panel{
+  background:var(--panel);
+  border:3px solid var(--line);
+  box-shadow:4px 4px 0 #000;
+  padding:10px;
+  margin-bottom:12px;
+}
+.status{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.stat{
+  background:var(--panel2);
+  border:2px solid #28435a;
+  padding:7px;
+  font-size:12px;
+}
+.bar{
+  width:100%;
+  height:10px;
+  background:#000;
+  border:1px solid #4d6b84;
+  margin-top:4px;
+}
+.fill{
+  height:100%;
+  width:50%;
+  background:var(--green);
+}
+.map{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:3px;
+  background:#020508;
+  border:3px solid #000;
+  padding:5px;
+}
+.tile{
+  aspect-ratio:1/1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:20px;
+  border:2px solid rgba(255,255,255,.08);
+  image-rendering:pixelated;
+}
+.sea{background:#12466b}
+.land{background:#2c7a3f}
+.port{background:#8a6534}
+.air{background:#596a7a}
+.radar{background:#35516a}
+.hospital{background:#f2f2f2;color:#cc2222}
+.pressure{background:#7a2020}
+.route{background:#174b8c}
+.actions{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+}
+button,select{
+  width:100%;
+  padding:12px;
+  border:3px solid #000;
+  background:#253b4f;
+  color:var(--text);
+  font-family:"Courier New",monospace;
+  font-weight:bold;
+  box-shadow:3px 3px 0 #000;
+  border-radius:0;
+}
+button:active{
+  transform:translate(2px,2px);
+  box-shadow:1px 1px 0 #000;
+}
+.primary{background:#1b5b92}
+.danger{background:#7a2020}
+.good{background:#266b38}
+.gold{background:#81681d;color:#fff}
+.log{
+  height:155px;
+  overflow:auto;
+  background:#030609;
+  border:2px solid #28435a;
+  padding:8px;
+  font-size:12px;
+  line-height:1.45;
+}
+.turn{
+  font-size:14px;
+  color:var(--gold);
+  text-align:center;
+}
+.result{
+  display:none;
+  text-align:center;
+  font-size:15px;
+  padding:14px;
+  border:3px solid var(--gold);
+  background:#111;
+}
+.small{
+  font-size:11px;
+  color:var(--muted);
+  line-height:1.4;
+}
+@media(min-width:720px){
+  .grid{
+    display:grid;
+    grid-template-columns:1.1fr .9fr;
+    gap:12px;
+  }
+  .actions{
+    grid-template-columns:1fr 1fr;
+  }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>SPINE & SPEAR</h1>
+  <div class="tagline">Hold the spine. Build the spear. Prevent the war.</div>
+  <div class="designed">Designed by Jimmy W Moore</div>
+</header>
+
+<div class="wrap">
+  <div class="panel turn" id="turnBox">Turn 1 / 12 — Luzon Strait Pressure Event</div>
+
+  <div class="grid">
+    <div>
+      <div class="panel">
+        <strong>FIRST ISLAND CHAIN MAP</strong>
+        <div class="small">Retro 16/32-bit mobile prototype map.</div>
+        <div class="map" id="map"></div>
+      </div>
+
+      <div class="panel">
+        <strong>STATUS</strong>
+        <div class="status" id="status"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel">
+        <strong>AI STANDING ORDERS</strong>
+        <div class="small">After your turn, AI controls your side using this doctrine.</div>
+        <select id="doctrine">
+          <option value="defensive">Defensive Doctrine</option>
+          <option value="humanitarian">Humanitarian Doctrine</option>
+          <option value="deterrence">Deterrence Doctrine</option>
+          <option value="sovereignty">Sovereignty Doctrine</option>
+          <option value="rapid">Rapid Response Doctrine</option>
+        </select>
+      </div>
+
+      <div class="panel">
+        <strong>COMMAND ACTIONS</strong>
+        <div class="actions">
+          <button onclick="act('radar')">Build Radar Network</button>
+          <button onclick="act('airfield')">Harden Airfield</button>
+          <button onclick="act('hospital')">Fund Hospital Hub</button>
+          <button onclick="act('coastguard')">Train Coast Guard</button>
+          <button onclick="act('port')">Expand Port Logistics</button>
+          <button onclick="act('diplomacy')">De-escalation Diplomacy</button>
+          <button onclick="act('speech')">Domestic Budget Speech</button>
+          <button onclick="act('allies')">Allied Burden Sharing</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <button class="primary" onclick="endTurn()">END TURN — RELEASE TO AI</button>
+  </div>
+
+  <div class="result" id="result"></div>
+
+  <div class="panel">
+    <strong>BATTLE LOG</strong>
+    <div class="log" id="log"></div>
+  </div>
+
+  <div class="panel small">
+    Victory: Deterrence 75+, Sovereignty 70+, Logistics 60+, Domestic Support 50+, Escalation under 80 by Turn 12.
+    You lose if escalation reaches 100, sovereignty falls below 30, domestic support below 20, or logistics below 25.
+  </div>
+</div>
+
+<script>
+const state={
+  turn:1,maxTurn:12,
+  Budget:100,
+  Deterrence:45,
+  Sovereignty:65,
+  Logistics:55,
+  "Domestic Support":60,
+  "Escalation Risk":35,
+  acted:false,
+  gameOver:false,
+  built:{radar:false,airfield:false,hospital:false,port:false,coastguard:false}
+};
+
+const mapTiles=[
+ "sea","sea","sea","pressure","pressure","sea","sea","sea",
+ "sea","land","radar","sea","sea","route","sea","sea",
+ "sea","land","port","route","sea","pressure","sea","sea",
+ "sea","land","hospital","air","route","sea","sea","sea",
+ "sea","sea","land","land","port","sea","pressure","sea",
+ "sea","route","sea","sea","land","land","sea","sea"
+];
+
+const icons={
+ sea:"≈",land:"▓",port:"⚓",air:"▣",radar:"⌁",hospital:"+",pressure:"!",route:"•"
+};
+
+function clamp(v){return Math.max(0,Math.min(100,v))}
+function change(k,v){state[k]=clamp(state[k]+v)}
+function log(msg){
+  const l=document.getElementById("log");
+  l.innerHTML=`> ${msg}<br>`+l.innerHTML;
+}
+function drawMap(){
+  const m=document.getElementById("map");
+  m.innerHTML="";
+  mapTiles.forEach(t=>{
+    const d=document.createElement("div");
+    d.className="tile "+t;
+    d.textContent=icons[t];
+    m.appendChild(d);
+  });
+}
+function drawStatus(){
+  document.getElementById("turnBox").textContent=`Turn ${state.turn} / ${state.maxTurn} — Luzon Strait Pressure Event`;
+  const keys=["Budget","Deterrence","Sovereignty","Logistics","Domestic Support","Escalation Risk"];
+  const s=document.getElementById("status");
+  s.innerHTML="";
+  keys.forEach(k=>{
+    const color=k==="Escalation Risk"?"var(--red)":k==="Budget"?"var(--gold)":"var(--green)";
+    s.innerHTML+=`
+      <div class="stat">
+        ${k}: ${state[k]}
+        <div class="bar"><div class="fill" style="width:${state[k]}%;background:${color}"></div></div>
+      </div>`;
+  });
+}
+function act(type){
+  if(state.gameOver)return;
+  if(state.acted){log("Only one major action per turn. End turn.");return;}
+  const actions={
+    radar:()=>{change("Deterrence",12);change("Logistics",5);change("Escalation Risk",3);change("Budget",-8);state.built.radar=true;log("Radar Network built. Northern Luzon watchtower strengthened.");},
+    airfield:()=>{change("Deterrence",10);change("Logistics",10);change("Escalation Risk",4);change("Budget",-10);state.built.airfield=true;log("Airfield hardened. Bases are harder to disable.");},
+    hospital:()=>{change("Sovereignty",14);change("Domestic Support",6);change("Logistics",4);change("Budget",-8);state.built.hospital=true;log("Hospital and disaster hub funded. Local trust increased.");},
+    coastguard:()=>{change("Sovereignty",10);change("Deterrence",8);change("Logistics",3);change("Budget",-7);state.built.coastguard=true;log("Philippine Coast Guard trained. Lawful maritime control improved.");},
+    port:()=>{change("Logistics",15);change("Deterrence",6);change("Budget",-9);state.built.port=true;log("Port logistics expanded. Allied movement improved.");},
+    diplomacy:()=>{change("Escalation Risk",-14);change("Domestic Support",5);change("Deterrence",-3);change("Budget",-4);log("De-escalation diplomacy reduced war pressure.");},
+    speech:()=>{change("Domestic Support",12);change("Budget",5);change("Deterrence",-2);log("Domestic budget speech improved public support.");},
+    allies:()=>{change("Logistics",8);change("Deterrence",8);change("Domestic Support",5);change("Budget",-5);log("Allied burden sharing increased coalition strength.");}
+  };
+  actions[type]();
+  state.acted=true;
+  checkEnd();
+  drawStatus();
+}
+function aiDoctrine(){
+  const d=document.getElementById("doctrine").value;
+  if(d==="defensive"){change("Deterrence",3);change("Logistics",2);change("Escalation Risk",-2);log("AI Defensive Doctrine: assets protected.");}
+  if(d==="humanitarian"){change("Sovereignty",5);change("Domestic Support",4);change("Escalation Risk",-1);log("AI Humanitarian Doctrine: disaster readiness and trust improved.");}
+  if(d==="deterrence"){change("Deterrence",6);change("Logistics",3);change("Escalation Risk",3);log("AI Deterrence Doctrine: stronger posture, higher tension.");}
+  if(d==="sovereignty"){change("Sovereignty",7);change("Deterrence",-2);change("Escalation Risk",-2);log("AI Sovereignty Doctrine: local legitimacy protected.");}
+  if(d==="rapid"){change("Logistics",5);change("Deterrence",4);change("Escalation Risk",2);change("Budget",-3);log("AI Rapid Response Doctrine: mobility increased.");}
+}
+function worldEvent(){
+  const events=[
+    ["Chinese maritime pressure",()=>{change("Escalation Risk",10);change("Sovereignty",-4)}],
+    ["Cyber intrusion hits logistics",()=>{change("Logistics",-8);change("Escalation Risk",5)}],
+    ["Typhoon hits the region",()=>{change("Logistics",-7); if(state.built.hospital){change("Sovereignty",8);change("Domestic Support",4)}}],
+    ["Local protest challenges access",()=>{change("Sovereignty",-10)}],
+    ["Allied support offer arrives",()=>{change("Logistics",8);change("Deterrence",4)}],
+    ["U.S. budget backlash",()=>{change("Domestic Support",-10)}],
+    ["China pulls back temporarily",()=>{change("Escalation Risk",-8)}],
+    ["Media praises disaster relief",()=>{change("Domestic Support",8);change("Sovereignty",6)}]
+  ];
+  const e=events[Math.floor(Math.random()*events.length)];
+  e[1]();
+  log("World Event: "+e[0]+".");
+}
+function endTurn(){
+  if(state.gameOver)return;
+  if(!state.acted){log("Choose one command action before ending turn.");return;}
+  aiDoctrine();
+  worldEvent();
+  checkEnd();
+  if(state.gameOver)return;
+  state.turn++;
+  state.acted=false;
+  if(state.turn>state.maxTurn){finalScore();return;}
+  drawStatus();
+}
+function checkEnd(){
+  if(state["Escalation Risk"]>=100)return lose("China fires first. Escalation reached 100.");
+  if(state.Sovereignty<30)return lose("Philippine sovereignty collapsed below 30.");
+  if(state["Domestic Support"]<20)return lose("Domestic support collapsed below 20.");
+  if(state.Logistics<25)return lose("Logistics collapsed below 25.");
+  if(state.Budget<=0)return lose("Budget exhausted. Strategy cannot continue.");
+}
+function finalScore(){
+  const win=
+    state.Deterrence>=75 &&
+    state.Sovereignty>=70 &&
+    state.Logistics>=60 &&
+    state["Domestic Support"]>=50 &&
+    state["Escalation Risk"]<80;
+  if(win)victory();
+  else lose("Deterrence failed by Turn 12. The system was not strong enough.");
+}
+function victory(){
+  state.gameOver=true;
+  const r=document.getElementById("result");
+  r.style.display="block";
+  r.innerHTML="<h2>STRATEGIC VICTORY</h2><p>Deterrence held. War prevented. Alliance survived.</p>";
+  log("Victory: You built a system so strong the enemy did not fire.");
+}
+function lose(reason){
+  state.gameOver=true;
+  const r=document.getElementById("result");
+  r.style.display="block";
+  r.innerHTML="<h2>MISSION FAILED</h2><p>"+reason+"</p><button onclick='location.reload()'>Restart</button>";
+  log("Mission failed: "+reason);
+}
+drawMap();
+drawStatus();
+log("Mission start: Build lawful deterrence. Prevent the war.");
+</script>
+</body>
+</html>
